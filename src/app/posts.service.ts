@@ -2,10 +2,13 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 
 import { Post } from "./post.model";
-import { map } from "rxjs/operators";
+import { map, catchError } from "rxjs/operators";
+import { Subject, throwError } from "rxjs";
 
 @Injectable()
 export class PostsService {
+
+  error:Subject<string> = new Subject<string>();
   constructor(private http: HttpClient) {}
 
   createAndStrorePost(title: string, content: string) {
@@ -16,9 +19,13 @@ export class PostsService {
         "https://angular-recipe-61972.firebaseio.com/posts.json",
         postData
       )
-      .subscribe(responseData => {
+      .subscribe(
+        responseData => {
         console.log(responseData);
-      });
+        },
+        error => {
+          this.error.next(error.message);
+        });
   }
 
   fetchPosts() {
@@ -35,7 +42,17 @@ export class PostsService {
             }
           }
           return postArray;
-        })
+        }),
+        catchError(
+          errorRes => {
+            //Log error
+            //Send to analytics
+            //Generic work on errors
+
+            //Its important to throw the error back
+            return throwError(errorRes);
+          }
+        )
       );
   }
 
